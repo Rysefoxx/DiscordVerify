@@ -1,0 +1,12 @@
+name: RyseVerify
+version: '${project.version}'
+main: com.github.rysefoxx.verifybot.VerifyBot
+api-version: 1.16
+authors: [ Rysefoxx ]
+description: Verify Plugin
+
+softdepend:
+  - PotPvP
+
+commands:
+  verify:
