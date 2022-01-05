@@ -27,6 +27,7 @@ package com.github.rysefoxx.verifybot.manager;
 import com.github.rysefoxx.potpvp.document.Document;
 import net.dv8tion.jda.api.entities.Member;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -50,8 +51,8 @@ public class VerifyDataManger extends Document {
         this.verifyMembers = new ArrayList<>();
     }
 
-    public String getDiscordTag(@NotNull UUID uuid) {
-        if (!this.verifiedPlayers.containsKey(uuid)) return "UNDEFINED";
+    public @Nullable String getDiscordId(@NotNull UUID uuid) {
+        if (!this.verifiedPlayers.containsKey(uuid)) return null;
         return this.verifiedPlayers.get(uuid);
     }
 
@@ -105,6 +106,8 @@ public class VerifyDataManger extends Document {
 
     @Override
     public void loadDocument() {
+        if (getConfig().getKeys(false).isEmpty())
+            return;
         for (String key : getConfig().getKeys(false)) {
             this.verifiedPlayers.put(UUID.fromString(key), getConfig().getString(key));
         }

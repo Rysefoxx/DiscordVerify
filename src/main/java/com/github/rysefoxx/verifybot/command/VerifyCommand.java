@@ -32,6 +32,7 @@ import com.github.rysefoxx.verifybot.util.StringDefaults;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -54,12 +55,43 @@ public record VerifyCommand(@NotNull VerifyBot plugin) implements CommandExecuto
 
         if (args.length != 1) {
             player.sendMessage(" §8● §7Verwende§8: §e/Verify <Key>");
+            player.sendMessage(" §8● §7Verwende§8: §e/Verify reset");
             return true;
         }
-        UserStats userStats = PotSystemAPI.getPlugin().getUserDataManager().getUserData(player.getUniqueId()).getUserStats();
+        UserStats userStats = PotSystemAPI.getInstance().getUserDataManager().getUserData(player.getUniqueId()).getUserStats();
+
+        if (args[0].equalsIgnoreCase("reset")) {
+            if (!userStats.isVerified()) {
+                player.sendMessage(StringDefaults.ERROR + "§cDu bist mit keinem Discord Account verbunden!");
+                return true;
+            }
+            String id = this.plugin.getVerifyDataManger().getDiscordId(player.getUniqueId());
+            if (id == null) {
+                player.sendMessage(StringDefaults.ERROR + "§cFür deinen Minecraft Account konnte keinen Key gefunden werden.");
+                return true;
+            }
+            User user = this.plugin.getJda().retrieveUserById(id).complete();
+            Guild guild = this.plugin.getJda().getGuildById("747888677077647470");
+            if (guild != null) {
+                Role verifyRole = guild.getRolesByName("verified", true).get(0);
+                guild.removeRoleFromMember(id, verifyRole).queue();
+            }
+            userStats.setVerified(false);
+            this.plugin.getVerifyDataManger().getConfig().set(player.getUniqueId().toString(), null);
+            this.plugin.getVerifyDataManger().saveFile();
+            player.sendMessage(StringDefaults.VERIFY + "§7Verbindung mit dem Discord Account §6" + user.getAsTag() + " §7wurde aufgehoben!");
+            user.openPrivateChannel().complete().sendMessageEmbeds((new EmbedCreator()).setColor(Color.RED).setTitle(":warning: | Verknüpfung aufgehoben!").setDescription("Dein Minecraft Account **" + player.getName() + "** ist nicht mehr mit Discord verbunden.").addField("Discord User:", user.getAsTag(), true).addField("Minecraft Account:", player.getName(), true).toEmbed()).queue();
+            return true;
+        }
 
         if (userStats.isVerified()) {
-            player.sendMessage(StringDefaults.ERROR + "§cDein Minecraft Account ist bereits mit §6" + this.plugin.getVerifyDataManger().getDiscordTag(player.getUniqueId()) + " §cverbunden!");
+            String id = this.plugin.getVerifyDataManger().getDiscordId(player.getUniqueId());
+            if (id == null) {
+                player.sendMessage(StringDefaults.ERROR + "§cFür deinen Minecraft Account konnte keinen Key gefunden werden.");
+                return true;
+            }
+            User user = this.plugin.getJda().retrieveUserById(id).complete();
+            player.sendMessage(StringDefaults.ERROR + "§cDein Minecraft Account ist bereits mit §6" + user.getAsTag() + " §cverbunden!");
             return true;
         }
 
@@ -83,7 +115,7 @@ public record VerifyCommand(@NotNull VerifyBot plugin) implements CommandExecuto
         this.plugin.getVerifyDataManger().removeVerifyMembers(member);
         this.plugin.getVerifyDataManger().removeDiscordData(player.getUniqueId());
         this.plugin.getVerifyDataManger().removeKey(player.getUniqueId());
-        this.plugin.getVerifyDataManger().addVerifiedPlayers(player.getUniqueId(), member.getUser().getAsTag());
+        this.plugin.getVerifyDataManger().addVerifiedPlayers(player.getUniqueId(), member.getId());
         userStats.setVerified(true);
 
         player.sendMessage(StringDefaults.VERIFY + "§aVerifizierung erfolgreich! §7Dein Minecraft Account ist nun mit §6" + member.getUser().getAsTag() + " §7verbunden.");

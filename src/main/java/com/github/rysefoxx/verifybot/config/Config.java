@@ -1,5 +1,6 @@
 package com.github.rysefoxx.verifybot.config;
 
+
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.io.*;
