@@ -1,6 +1,7 @@
 # DiscordVerify
 
 This bot & plugin is related to the PotPvP-1-17 system.
+https://github.com/Rysefoxx/PotPvP-1-17
 
 
 # License
